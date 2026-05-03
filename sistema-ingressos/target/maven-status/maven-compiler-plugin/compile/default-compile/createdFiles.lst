@@ -1,0 +1,11 @@
+com\ingressos\model\IngressoMeia.class
+com\ingressos\config\MongoConfig.class
+com\ingressos\controller\IngressoController.class
+com\ingressos\model\Ingresso.class
+com\ingressos\repository\IngressoRepository.class
+com\ingressos\controller\HomeController.class
+com\ingressos\service\IngressoService.class
+com\ingressos\model\IngressoVIP.class
+com\ingressos\SistemaIngressosApplication.class
+com\ingressos\model\IngressoForm.class
+com\ingressos\model\IngressoNormal.class

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: html('Novo Ingresso', ~{::main-content})}">
+<body>
+<div th:fragment="main-content">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Header -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="@{/ingressos}" class="btn btn-sm btn-outline-secondary">
+                    <i data-lucide="arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="page-title mb-0">
+                        <i data-lucide="ticket-plus" class="me-2"></i>Novo Ingresso
+                    </h1>
+                    <p class="text-muted mb-0 small">Preencha os dados do ingresso</p>
+                </div>
+            </div>
+
+            <!-- Painel de tipos -->
+            <div class="tipo-selector mb-4">
+                <h6 class="fw-bold mb-3">Selecione o Tipo de Ingresso</h6>
+                <div class="row g-3" id="tipo-cards">
+
+                    <div class="col-md-4">
+                        <div class="tipo-card" data-tipo="NORMAL" onclick="selecionarTipo('NORMAL')">
+                            <div class="tipo-icon"><i data-lucide="ticket"></i></div>
+                            <div class="tipo-nome">Normal</div>
+                            <div class="tipo-desc">Sem desconto</div>
+                            <div class="tipo-badge">100% do valor</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="tipo-card tipo-card-vip" data-tipo="VIP" onclick="selecionarTipo('VIP')">
+                            <div class="tipo-icon"><i data-lucide="star"></i></div>
+                            <div class="tipo-nome">VIP</div>
+                            <div class="tipo-desc">Acesso exclusivo</div>
+                            <div class="tipo-badge">+50% sobre o valor</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="tipo-card tipo-card-meia" data-tipo="MEIA" onclick="selecionarTipo('MEIA')">
+                            <div class="tipo-icon"><i data-lucide="percent"></i></div>
+                            <div class="tipo-nome">Meia-Entrada</div>
+                            <div class="tipo-desc">50% de desconto</div>
+                            <div class="tipo-badge">50% do valor</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Formulário -->
+            <div class="form-card">
+                <form th:action="@{/ingressos/novo}" th:object="${ingressoForm}" method="post">
+
+                    <!-- Campo oculto do tipo -->
+                    <input type="hidden" th:field="*{tipo}" id="campoTipo"/>
+                    <div th:if="${#fields.hasErrors('tipo')}" class="alert alert-danger small py-2">
+                        <span th:errors="*{tipo}"></span>
+                    </div>
+
+                    <!-- Valor calculado em tempo real -->
+                    <div class="valor-preview mb-4" id="valorPreview" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Valor Final Calculado:</span>
+                            <span class="valor-final" id="valorFinal">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <h6 class="section-title mb-3"><i data-lucide="calendar" class="me-2"></i>Dados do Evento</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nome do Evento <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{nomeEvento}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('nomeEvento')} ? 'is-invalid'"
+                                   placeholder="Ex: Festival de Música 2024"/>
+                            <div class="invalid-feedback" th:errors="*{nomeEvento}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Local <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{localEvento}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('localEvento')} ? 'is-invalid'"
+                                   placeholder="Ex: Ginásio Municipal"/>
+                            <div class="invalid-feedback" th:errors="*{localEvento}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Data do Evento <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{dataEvento}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('dataEvento')} ? 'is-invalid'"
+                                   placeholder="Ex: 25/12/2024"/>
+                            <div class="invalid-feedback" th:errors="*{dataEvento}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Preco Base (R$) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" step="0.01" min="0.01" th:field="*{precoBase}"
+                                       class="form-control"
+                                       th:classappend="${#fields.hasErrors('precoBase')} ? 'is-invalid'"
+                                       placeholder="0,00" id="precoBaseInput"
+                                       oninput="calcularPreview()"/>
+                            </div>
+                            <div class="invalid-feedback" th:errors="*{precoBase}"></div>
+                        </div>
+                    </div>
+
+                    <h6 class="section-title mb-3"><i data-lucide="user" class="me-2"></i>Dados do Comprador</h6>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nome Completo <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{nomeComprador}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('nomeComprador')} ? 'is-invalid'"
+                                   placeholder="Nome do comprador"/>
+                            <div class="invalid-feedback" th:errors="*{nomeComprador}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">CPF <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{cpfComprador}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('cpfComprador')} ? 'is-invalid'"
+                                   placeholder="000.000.000-00"/>
+                            <div class="invalid-feedback" th:errors="*{cpfComprador}"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a th:href="@{/ingressos}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-accent">
+                            <i data-lucide="save"></i> Salvar Ingresso
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let tipoSelecionado = '';
+
+        function selecionarTipo(tipo) {
+            tipoSelecionado = tipo;
+            document.getElementById('campoTipo').value = tipo;
+
+            document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('selecionado'));
+            document.querySelector('[data-tipo="' + tipo + '"]').classList.add('selecionado');
+
+            calcularPreview();
+        }
+
+        function calcularPreview() {
+            const precoBase = parseFloat(document.getElementById('precoBaseInput').value) || 0;
+            if (!tipoSelecionado || precoBase <= 0) {
+                document.getElementById('valorPreview').style.display = 'none';
+                return;
+            }
+
+            let valor = precoBase;
+            if (tipoSelecionado === 'VIP')  valor = precoBase * 1.5;
+            if (tipoSelecionado === 'MEIA') valor = precoBase * 0.5;
+
+            document.getElementById('valorFinal').textContent = 'R$ ' + valor.toFixed(2).replace('.', ',');
+            document.getElementById('valorPreview').style.display = 'block';
+        }
+    </script>
+
+</div>
+</body>
+</html>
