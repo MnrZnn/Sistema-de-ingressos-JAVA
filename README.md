@@ -26,7 +26,7 @@ Sistema de Ingressos em JAVA simples
 
 1. Abra o CMD (ou terminal) e navegue até a pasta do projeto:
    ```
-   cd caminho/para/a/pasta/biblioteca
+   cd caminho/para/a/pasta/ingressos
    ```
 2. Rode o comando abaixo para iniciar o projeto:
    ```
