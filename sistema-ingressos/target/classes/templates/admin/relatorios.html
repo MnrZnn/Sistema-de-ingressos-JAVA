@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: html('Relatórios', ~{::main-content})}">
+<body>
+<div th:fragment="main-content">
+
+    <div class="page-header d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="page-title"><i data-lucide="bar-chart-2" class="me-2"></i>Relatórios</h1>
+            <p class="text-muted mb-0">Consulta de ingressos por evento</p>
+        </div>
+    </div>
+
+    <div class="filter-bar mb-4">
+        <form th:action="@{/admin/relatorios}" method="get" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Selecione o Evento</label>
+                <select name="eventoId" class="form-select">
+                    <option value="">— Selecione um evento —</option>
+                    <option th:each="ev : ${eventos}" th:value="${ev.id}" th:text="${ev.nome}"
+                            th:selected="${eventoSelecionado != null && ev.id == eventoSelecionado.id}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i data-lucide="search"></i> Consultar</button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${eventoSelecionado != null}">
+
+        <div class="row mb-4 g-3">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="ticket"></i></div>
+                    <div>
+                        <div class="stat-label">Total Emitidos</div>
+                        <div class="stat-value" th:text="${#lists.size(ingressos)}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#fef3c7;color:var(--warning);"><i data-lucide="clock"></i></div>
+                    <div>
+                        <div class="stat-label">Reservados</div>
+                        <div class="stat-value" th:text="${qtdReservados}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dcfce7;color:var(--success);"><i data-lucide="check-circle"></i></div>
+                    <div>
+                        <div class="stat-label">Utilizados</div>
+                        <div class="stat-value" th:text="${qtdUtilizados}">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon"><i data-lucide="wallet"></i></div>
+                    <div>
+                        <div class="stat-label">Receita</div>
+                        <div class="stat-value" th:text="'R$ ' + ${#numbers.formatDecimal(receita, 1, 'POINT', 2, 'COMMA')}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(ingressos)}">
+            <i data-lucide="inbox"></i>
+            <h5>Nenhum ingresso para este evento</h5>
+        </div>
+
+        <div class="table-card" th:unless="${#lists.isEmpty(ingressos)}">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Comprador</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th class="text-center">Ver</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="ing : ${ingressos}">
+                        <td>
+                            <div class="fw-semibold" th:text="${ing.nomeComprador}"></div>
+                            <div class="text-muted small" th:text="${ing.cpfComprador ?: '—'}"></div>
+                        </td>
+                        <td>
+                            <span th:class="'badge badge-tipo badge-' + ${ing.tipoIngresso.toLowerCase()}"
+                                  th:text="${ing.tipoIngresso}"></span>
+                        </td>
+                        <td th:text="'R$ ' + ${#numbers.formatDecimal(ing.calcularValor(), 1, 'POINT', 2, 'COMMA')}"></td>
+                        <td>
+                            <span th:class="'badge badge-status badge-' + ${ing.status.toLowerCase()}"
+                                  th:text="${ing.status}"></span>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/admin/ingressos/{id}(id=${ing.id})}" class="btn btn-sm btn-outline-primary">
+                                <i data-lucide="eye" style="width:14px;height:14px;"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

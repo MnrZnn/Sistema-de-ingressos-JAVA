@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: html('Reservar Ingresso', ~{::main-content})}">
+<body>
+<div th:fragment="main-content">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="@{/ingressos/catalogo}" class="btn btn-sm btn-outline-secondary">
+                    <i data-lucide="arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="page-title mb-0"><i data-lucide="ticket-plus" class="me-2"></i>Reservar Ingresso</h1>
+                    <p class="text-muted mb-0 small" th:text="${evento.nome}"></p>
+                </div>
+            </div>
+
+            <div class="stat-card mb-4">
+                <div class="stat-icon"><i data-lucide="calendar"></i></div>
+                <div class="row w-100">
+                    <div class="col-md-3">
+                        <div class="stat-label">Local</div>
+                        <div class="fw-semibold small" th:text="${evento.local}"></div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-label">Data</div>
+                        <div class="fw-semibold small" th:text="${evento.dataHorario}"></div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-label">Disponíveis</div>
+                        <div class="fw-semibold small" th:text="${evento.ingressosDisponiveis}"></div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-label">Valor Base</div>
+                        <div class="fw-bold" style="color:var(--blue-600);"
+                             th:text="'R$ ' + ${#numbers.formatDecimal(evento.valorBase, 1, 'POINT', 2, 'COMMA')}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tipo-selector mb-4">
+                <h6 class="fw-bold mb-3">Selecione o Tipo de Ingresso</h6>
+                <div class="row g-3" id="tipo-cards">
+                    <div class="col-md-4">
+                        <div class="tipo-card" data-tipo="NORMAL" onclick="selecionarTipo('NORMAL')">
+                            <div class="tipo-icon"><i data-lucide="ticket"></i></div>
+                            <div class="tipo-nome">Normal</div>
+                            <div class="tipo-desc">Sem desconto</div>
+                            <div class="tipo-badge">100% do valor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="tipo-card tipo-card-vip" data-tipo="VIP" onclick="selecionarTipo('VIP')">
+                            <div class="tipo-icon"><i data-lucide="star"></i></div>
+                            <div class="tipo-nome">VIP</div>
+                            <div class="tipo-desc">Acesso exclusivo</div>
+                            <div class="tipo-badge">+50% sobre o valor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="tipo-card tipo-card-meia" data-tipo="MEIA" onclick="selecionarTipo('MEIA')">
+                            <div class="tipo-icon"><i data-lucide="percent"></i></div>
+                            <div class="tipo-nome">Meia-Entrada</div>
+                            <div class="tipo-desc">50% de desconto</div>
+                            <div class="tipo-badge">50% do valor</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <form th:action="@{/ingressos/reservar}" method="post">
+                    <input type="hidden" name="eventoId" th:value="${evento.id}"/>
+                    <input type="hidden" id="campoTipo" name="tipo" value="NORMAL"/>
+
+                    <div class="valor-preview mb-4" id="valorPreview">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Valor Final:</span>
+                            <span class="valor-final" id="valorFinal"
+                                  th:text="'R$ ' + ${#numbers.formatDecimal(evento.valorBase, 1, 'POINT', 2, 'COMMA')}"></span>
+                        </div>
+                    </div>
+
+                    <h6 class="section-title mb-3"><i data-lucide="user" class="me-2"></i>Dados do Comprador</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">CPF</label>
+                            <input type="text" name="cpfComprador" class="form-control" placeholder="000.000.000-00"/>
+                        </div>
+                        <div class="col-md-6" id="campoExtra" style="display:none;">
+                            <label class="form-label fw-semibold" id="labelExtra">Campo Extra</label>
+                            <input type="text" name="extra" id="extra" class="form-control" placeholder="..."/>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a th:href="@{/ingressos/catalogo}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-accent">
+                            <i data-lucide="ticket"></i> Confirmar Reserva
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const base = /*[[${evento.valorBase}]]*/ 0;
+        let tipoAtual = 'NORMAL';
+
+        function selecionarTipo(tipo) {
+            tipoAtual = tipo;
+            document.getElementById('campoTipo').value = tipo;
+            document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('selecionado'));
+            document.querySelector('[data-tipo="' + tipo + '"]').classList.add('selecionado');
+
+            let valor = base;
+            if (tipo === 'VIP') { valor = base * 1.5; mostrarExtra('Benefícios VIP', 'Ex: open bar, meet & greet'); }
+            else if (tipo === 'MEIA') { valor = base * 0.5; mostrarExtra('Documento Comprobatório', 'Ex: Carteirinha estudantil'); }
+            else { document.getElementById('campoExtra').style.display = 'none'; }
+
+            document.getElementById('valorFinal').textContent = 'R$ ' + valor.toFixed(2).replace('.', ',');
+        }
+
+        function mostrarExtra(label, placeholder) {
+            document.getElementById('campoExtra').style.display = 'block';
+            document.getElementById('labelExtra').textContent = label;
+            document.getElementById('extra').placeholder = placeholder;
+        }
+
+        selecionarTipo('NORMAL');
+    </script>
+
+</div>
+</body>
+</html>

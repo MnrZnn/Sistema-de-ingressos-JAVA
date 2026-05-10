@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: html('Novo Ingresso', ~{::main-content})}">
+<body>
+<div th:fragment="main-content">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="@{/admin/ingressos}" class="btn btn-sm btn-outline-secondary">
+                    <i data-lucide="arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="page-title mb-0"><i data-lucide="ticket-plus" class="me-2"></i>Novo Ingresso</h1>
+                    <p class="text-muted mb-0 small">Cadastro administrativo de ingresso</p>
+                </div>
+            </div>
+
+            <div class="tipo-selector mb-4">
+                <h6 class="fw-bold mb-3">Selecione o Tipo de Ingresso</h6>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="tipo-card" data-tipo="NORMAL" onclick="selecionarTipo('NORMAL')">
+                            <div class="tipo-icon"><i data-lucide="ticket"></i></div>
+                            <div class="tipo-nome">Normal</div>
+                            <div class="tipo-desc">Sem desconto</div>
+                            <div class="tipo-badge">100% do valor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="tipo-card tipo-card-vip" data-tipo="VIP" onclick="selecionarTipo('VIP')">
+                            <div class="tipo-icon"><i data-lucide="star"></i></div>
+                            <div class="tipo-nome">VIP</div>
+                            <div class="tipo-desc">Acesso exclusivo</div>
+                            <div class="tipo-badge">+50% sobre o valor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="tipo-card tipo-card-meia" data-tipo="MEIA" onclick="selecionarTipo('MEIA')">
+                            <div class="tipo-icon"><i data-lucide="percent"></i></div>
+                            <div class="tipo-nome">Meia-Entrada</div>
+                            <div class="tipo-desc">50% de desconto</div>
+                            <div class="tipo-badge">50% do valor</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <form th:action="@{/admin/ingressos/novo}" method="post">
+                    <input type="hidden" id="campoTipo" name="tipo" value="NORMAL"/>
+
+                    <div class="valor-preview mb-4" id="valorPreview" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold">Valor Final Calculado:</span>
+                            <span class="valor-final" id="valorFinal">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <h6 class="section-title mb-3"><i data-lucide="calendar" class="me-2"></i>Dados do Evento</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Evento (opcional — vincula ao catálogo)</label>
+                            <select name="eventoId" class="form-select" onchange="preencherEvento(this)">
+                                <option value="">— Preencher manualmente —</option>
+                                <option th:each="ev : ${eventos}" th:value="${ev.id}"
+                                        th:text="${ev.nome} + ' — ' + ${ev.dataHorario}"
+                                        th:attr="data-nome=${ev.nome},data-local=${ev.local},data-data=${ev.dataHorario},data-preco=${ev.valorBase}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nome do Evento <span class="text-danger">*</span></label>
+                            <input type="text" id="nomeEvento" name="nomeEvento" class="form-control" placeholder="Ex: Festival de Música" required/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Local <span class="text-danger">*</span></label>
+                            <input type="text" id="localEvento" name="localEvento" class="form-control" placeholder="Ex: Arena" required/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Data <span class="text-danger">*</span></label>
+                            <input type="text" id="dataEvento" name="dataEvento" class="form-control" placeholder="Ex: 25/12/2025" required/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Preço Base (R$) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" step="0.01" min="0.01" id="precoBaseInput" name="precoBase"
+                                       class="form-control" placeholder="0,00" oninput="calcularPreview()"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="section-title mb-3"><i data-lucide="user" class="me-2"></i>Dados do Comprador</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nome Completo <span class="text-danger">*</span></label>
+                            <input type="text" name="nomeComprador" class="form-control" placeholder="Nome do comprador" required/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">CPF</label>
+                            <input type="text" name="cpfComprador" class="form-control" placeholder="000.000.000-00"/>
+                        </div>
+                        <div class="col-md-6" id="campoExtra" style="display:none;">
+                            <label class="form-label fw-semibold" id="labelExtra">Campo extra</label>
+                            <input type="text" name="extra" id="extra" class="form-control"/>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a th:href="@{/admin/ingressos}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-accent">
+                            <i data-lucide="save"></i> Salvar Ingresso
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let tipoSelecionado = 'NORMAL';
+
+        function selecionarTipo(tipo) {
+            tipoSelecionado = tipo;
+            document.getElementById('campoTipo').value = tipo;
+            document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('selecionado'));
+            document.querySelector('[data-tipo="' + tipo + '"]').classList.add('selecionado');
+            if (tipo === 'VIP') { mostrarExtra('Benefícios VIP', 'Ex: open bar'); }
+            else if (tipo === 'MEIA') { mostrarExtra('Documento Comprobatório', 'Ex: Carteirinha'); }
+            else { document.getElementById('campoExtra').style.display = 'none'; }
+            calcularPreview();
+        }
+
+        function mostrarExtra(label, ph) {
+            document.getElementById('campoExtra').style.display = 'block';
+            document.getElementById('labelExtra').textContent = label;
+            document.getElementById('extra').placeholder = ph;
+        }
+
+        function calcularPreview() {
+            const base = parseFloat(document.getElementById('precoBaseInput').value) || 0;
+            if (base <= 0) { document.getElementById('valorPreview').style.display = 'none'; return; }
+            let v = base;
+            if (tipoSelecionado === 'VIP') v = base * 1.5;
+            if (tipoSelecionado === 'MEIA') v = base * 0.5;
+            document.getElementById('valorFinal').textContent = 'R$ ' + v.toFixed(2).replace('.', ',');
+            document.getElementById('valorPreview').style.display = 'block';
+        }
+
+        function preencherEvento(sel) {
+            const opt = sel.options[sel.selectedIndex];
+            if (!opt.value) return;
+            document.getElementById('nomeEvento').value  = opt.getAttribute('data-nome')  || '';
+            document.getElementById('localEvento').value = opt.getAttribute('data-local') || '';
+            document.getElementById('dataEvento').value  = opt.getAttribute('data-data')  || '';
+            document.getElementById('precoBaseInput').value = opt.getAttribute('data-preco') || '';
+            calcularPreview();
+        }
+
+        selecionarTipo('NORMAL');
+    </script>
+
+</div>
+</body>
+</html>

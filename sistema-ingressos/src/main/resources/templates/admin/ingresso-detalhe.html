@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: html('Detalhe do Ingresso', ~{::main-content})}">
+<body>
+<div th:fragment="main-content">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="@{/admin/ingressos}" class="btn btn-sm btn-outline-secondary">
+                    <i data-lucide="arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="page-title mb-0"><i data-lucide="ticket" class="me-2"></i>Detalhe do Ingresso</h1>
+                    <p class="text-muted mb-0 small" th:text="'ID: ' + ${ingresso.id}"></p>
+                </div>
+            </div>
+
+            <div class="ingresso-card mb-4"
+                 th:classappend="'ingresso-card-' + ${ingresso.tipoIngresso.toLowerCase()}">
+                <div class="ingresso-card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="ingresso-icon-big">
+                                <i data-lucide="ticket"  th:if="${ingresso.tipoIngresso == 'NORMAL'}"></i>
+                                <i data-lucide="star"    th:if="${ingresso.tipoIngresso == 'VIP'}"></i>
+                                <i data-lucide="percent" th:if="${ingresso.tipoIngresso == 'MEIA'}"></i>
+                            </div>
+                            <div>
+                                <div class="ingresso-tipo-label" th:text="${ingresso.descricaoTipo}"></div>
+                                <div class="ingresso-evento-nome" th:text="${ingresso.nomeEvento}"></div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="ingresso-valor-label">Valor</div>
+                            <div class="ingresso-valor"
+                                 th:text="'R$ ' + ${#numbers.formatDecimal(ingresso.calcularValor(), 1, 'POINT', 2, 'COMMA')}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ingresso-card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <div class="detail-label"><i data-lucide="map-pin" style="width:14px;height:14px;"></i> Local</div>
+                                <div class="detail-value" th:text="${ingresso.localEvento}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <div class="detail-label"><i data-lucide="calendar" style="width:14px;height:14px;"></i> Data</div>
+                                <div class="detail-value" th:text="${ingresso.dataEvento}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <div class="detail-label"><i data-lucide="user" style="width:14px;height:14px;"></i> Comprador</div>
+                                <div class="detail-value" th:text="${ingresso.nomeComprador}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <div class="detail-label"><i data-lucide="id-card" style="width:14px;height:14px;"></i> CPF</div>
+                                <div class="detail-value" th:text="${ingresso.cpfComprador ?: '—'}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <div class="detail-label"><i data-lucide="dollar-sign" style="width:14px;height:14px;"></i> Preço Base</div>
+                                <div class="detail-value"
+                                     th:text="'R$ ' + ${#numbers.formatDecimal(ingresso.precoBase, 1, 'POINT', 2, 'COMMA')}"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-group">
+                                <div class="detail-label"><i data-lucide="activity" style="width:14px;height:14px;"></i> Status</div>
+                                <div class="detail-value">
+                                    <span th:class="'badge badge-status badge-' + ${ingresso.status.toLowerCase()}"
+                                          th:text="${ingresso.status}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="detail-group">
+                                <div class="detail-label"><i data-lucide="clock" style="width:14px;height:14px;"></i> Cadastrado em</div>
+                                <div class="detail-value"
+                                     th:text="${#temporals.format(ingresso.dataCadastro, 'dd/MM/yyyy HH:mm')}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card mb-4" th:if="${ingresso.qrCodeBase64 != null}">
+                <h6 class="fw-bold mb-3"><i data-lucide="qr-code" class="me-2"></i>QR Code — Controle de Entrada</h6>
+                <div class="d-flex align-items-center gap-4 flex-wrap">
+                    <img th:src="'data:image/png;base64,' + ${ingresso.qrCodeBase64}"
+                         alt="QR Code" style="width:160px;height:160px;border:1px solid var(--border);border-radius:8px;"/>
+                    <div>
+                        <p class="text-muted small mb-3">Valide o QR Code para registrar a entrada do participante.</p>
+                        <form th:if="${ingresso.status != 'UTILIZADO' && ingresso.status != 'CANCELADO'}"
+                              th:action="@{/admin/ingressos/{id}/validar-qr(id=${ingresso.id})}" method="post">
+                            <button type="submit" class="btn btn-success">
+                                <i data-lucide="scan-line"></i> Validar QR Code — Registrar Entrada
+                            </button>
+                        </form>
+                        <span th:if="${ingresso.status == 'UTILIZADO'}"
+                              class="badge badge-status badge-utilizado fs-6">
+                            <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Já utilizado
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card mb-4" th:if="${ingresso.status == 'RESERVADO' || ingresso.status == 'CONFIRMADO'}">
+                <h6 class="fw-bold mb-3"><i data-lucide="settings" class="me-2"></i>Alterar Status</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <form th:if="${ingresso.status == 'RESERVADO'}"
+                          th:action="@{/admin/ingressos/{id}/status(id=${ingresso.id})}" method="post" class="d-inline">
+                        <input type="hidden" name="status" value="CONFIRMADO"/>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="check"></i> Confirmar Ingresso
+                        </button>
+                    </form>
+                    <form th:action="@{/admin/ingressos/{id}/status(id=${ingresso.id})}" method="post" class="d-inline">
+                        <input type="hidden" name="status" value="UTILIZADO"/>
+                        <button type="submit" class="btn btn-success">
+                            <i data-lucide="check-circle"></i> Marcar como Utilizado
+                        </button>
+                    </form>
+                    <form th:action="@{/admin/ingressos/{id}/status(id=${ingresso.id})}" method="post" class="d-inline">
+                        <input type="hidden" name="status" value="CANCELADO"/>
+                        <button type="submit" class="btn btn-warning"
+                                onclick="return confirm('Deseja cancelar este ingresso?')">
+                            <i data-lucide="x-circle"></i> Cancelar Ingresso
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="danger-zone">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold text-danger">Remover Ingresso</div>
+                        <div class="small text-muted">Esta ação é irreversível.</div>
+                    </div>
+                    <form th:action="@{/admin/ingressos/{id}/deletar(id=${ingresso.id})}" method="post">
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Tem certeza?')">
+                            <i data-lucide="trash-2"></i> Remover
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
